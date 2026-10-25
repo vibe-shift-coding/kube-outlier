@@ -1,0 +1,28 @@
+# Built-in scope exclusions (ADR-0003). Merged (deduped) with any user-supplied
+# scope.kinds.exclude / scope.namespaces.exclude — never overridden, only extended.
+kindExclude:
+  - Event
+  - events.k8s.io/Event
+  - discovery.k8s.io/EndpointSlice
+  - Endpoints
+  - coordination.k8s.io/Lease
+  - Pod
+  - apps/ReplicaSet
+  - apps/ControllerRevision
+  - metrics.k8s.io/NodeMetrics
+  - metrics.k8s.io/PodMetrics
+  - ComponentStatus
+  - Node
+namespaceExclude:
+  - kube-system
+  - kube-public
+  - kube-node-lease
+# API groups whose discovery may fail without making a run partial: the
+# aggregated metrics APIs, often served by an add-on that is down. Their types
+# are never scanned anyway (excluded above, or not listable), so a failed
+# lookup loses nothing. Any other group that fails discovery is reported as
+# skipped and the run exits 2.
+discoveryOptionalGroups:
+  - metrics.k8s.io
+  - custom.metrics.k8s.io
+  - external.metrics.k8s.io

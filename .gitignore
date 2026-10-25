@@ -1,0 +1,31 @@
+# built binary (go build -o kube-outlier ./cmd/kube-outlier)
+/kube-outlier
+
+# goreleaser output
+/dist/
+
+# Go test / coverage artifacts
+*.test
+*.out
+coverage.*
+
+# local scan outputs and kubeconfigs (may hold credentials or cluster inventory)
+*.kubeconfig
+/kubeconfig*
+/report.json
+/snapshots/
+/exports/
+.env
+.env.*
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# local tool settings
+.claude/settings.local.json
+

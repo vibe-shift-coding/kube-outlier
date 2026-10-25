@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "toolVersion": "v0.1.0-test",
+  "generatedAt": "2026-07-01T00:00:00Z",
+  "fleet": {
+    "requested": 1,
+    "reachable": 1,
+    "clusters": [
+      {
+        "name": "fixture",
+        "context": "fixture",
+        "reachable": true,
+        "serverVersion": "v1.30.0"
+      }
+    ]
+  },
+  "scope": {
+    "includeClusterScoped": false,
+    "namespaceExclude": [
+      "kube-system",
+      "kube-public",
+      "kube-node-lease"
+    ],
+    "namespaceExcludePatterns": [],
+    "kindExclude": [
+      "Event",
+      "events.k8s.io/Event",
+      "discovery.k8s.io/EndpointSlice",
+      "Endpoints",
+      "coordination.k8s.io/Lease",
+      "Pod",
+      "apps/ReplicaSet",
+      "apps/ControllerRevision",
+      "metrics.k8s.io/NodeMetrics",
+      "metrics.k8s.io/PodMetrics",
+      "ComponentStatus",
+      "Node"
+    ],
+    "kindInclude": []
+  },
+  "fleetPresence": {
+    "applied": false,
+    "source": "none"
+  },
+  "skippedGVRs": [],
+  "findings": [
+    {
+      "class": "likely-manual",
+      "resource": {
+        "group": "",
+        "kind": "ConfigMap",
+        "namespace": "default",
+        "name": "debug-dump",
+        "id": "ConfigMap default/debug-dump"
+      },
+      "clusters": [
+        "fixture"
+      ],
+      "ownership": {
+        "owner": "kubectl",
+        "kubectlWritten": true,
+        "managers": [
+          "kubectl-client-side-apply"
+        ],
+        "signals": [
+          {
+            "code": "kubectl.manager",
+            "detail": "manager=kubectl-client-side-apply"
+          },
+          {
+            "code": "kubectl.last-applied",
+            "detail": "kubectl.kubernetes.io/last-applied-configuration present"
+          },
+          {
+            "code": "no-pipeline-markers",
+            "detail": "no Helm, Argo CD or Flux markers, no ownerReferences"
+          }
+        ]
+      },
+      "score": {
+        "base": 80,
+        "fleetModifier": 0,
+        "total": 80,
+        "fleetApplied": false,
+        "reasons": [
+          {
+            "code": "no-pipeline-markers",
+            "points": 35
+          },
+          {
+            "code": "kubectl-manager",
+            "points": 25
+          },
+          {
+            "code": "last-applied",
+            "points": 10
+          },
+          {
+            "code": "age",
+            "points": 10,
+            "detail": "137d"
+          }
+        ]
+      },
+      "creationTimestamps": {
+        "fixture": "2026-02-14T09:30:00Z"
+      },
+      "ageDays": 137,
+      "message": "ConfigMap default/debug-dump was written by a kubectl client and has no pipeline markers"
+    },
+    {
+      "class": "likely-manual",
+      "resource": {
+        "group": "networking.k8s.io",
+        "kind": "NetworkPolicy",
+        "namespace": "default",
+        "name": "temp-allow-all",
+        "id": "networking.k8s.io/NetworkPolicy default/temp-allow-all"
+      },
+      "clusters": [
+        "fixture"
+      ],
+      "ownership": {
+        "owner": "kubectl",
+        "kubectlWritten": true,
+        "managers": [
+          "kubectl-create"
+        ],
+        "signals": [
+          {
+            "code": "kubectl.manager",
+            "detail": "manager=kubectl-create"
+          },
+          {
+            "code": "no-pipeline-markers",
+            "detail": "no Helm, Argo CD or Flux markers, no ownerReferences"
+          }
+        ]
+      },
+      "score": {
+        "base": 75,
+        "fleetModifier": 0,
+        "total": 75,
+        "fleetApplied": false,
+        "reasons": [
+          {
+            "code": "no-pipeline-markers",
+            "points": 35
+          },
+          {
+            "code": "kubectl-manager",
+            "points": 25
+          },
+          {
+            "code": "kind-weight",
+            "points": 15,
+            "detail": "NetworkPolicy: high"
+          }
+        ]
+      },
+      "creationTimestamps": {
+        "fixture": "2026-06-28T16:12:55Z"
+      },
+      "ageDays": 3,
+      "message": "networking.k8s.io/NetworkPolicy default/temp-allow-all was written by a kubectl client and has no pipeline markers"
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "byClass": {
+      "likely-manual": 2
+    },
+    "suppressedBelowMinScore": 2
+  },
+  "partial": false,
+  "exitCode": 0
+}

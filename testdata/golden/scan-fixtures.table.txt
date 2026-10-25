@@ -1,0 +1,3 @@
+SCORE  KIND                             NAMESPACE/NAME          CLUSTER  OWNER    AGE   WHY
+80     ConfigMap                        default/debug-dump      fixture  kubectl  137d  no-pipeline-markers,kubectl-manager,last-applied,age
+75     networking.k8s.io/NetworkPolicy  default/temp-allow-all  fixture  kubectl  3d    no-pipeline-markers,kubectl-manager,kind-weight

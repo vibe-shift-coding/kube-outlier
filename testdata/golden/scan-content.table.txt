@@ -1,0 +1,11 @@
+SCORE  KIND             NAMESPACE/NAME  PRESENT-ON  CLUSTER  OWNER  AGE  WHY
+-      apps/Deployment  default/web     3/3         c        -      30d  content-differs
+
+Content differences:
+
+  apps/Deployment default/web — majority version on 2 cluster(s): a, b
+    cluster c:
+      spec.template.spec.containers[0].image: web:v1 → web:v2
+
+Fields that differ most:
+  spec.template.spec.containers[0].image differs on 1 cluster(s)

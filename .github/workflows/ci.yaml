@@ -1,0 +1,227 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: the token can only read this repository. Pull requests from
+# forks run with this read-only token and no secrets (pull_request, never
+# pull_request_target). Third-party actions are pinned to full commit SHAs.
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request cancels the older run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.10"
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0
+
+      - name: Read-only guard
+        run: ./scripts/check-readonly.sh
+
+      - name: Vulnerability check
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # Single-cluster ownership e2e against a real API server. The 3-cluster fleet e2e runs locally via
+  # scripts/fleet-smoke.sh.
+  kind-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.10"
+
+      - name: Create kind cluster
+        uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
+        with:
+          cluster_name: e2e
+          # Pinned so a new kind release can't change the cluster under test.
+          version: v0.33.0
+          node_image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+
+      - name: Build
+        run: go build -o kube-outlier ./cmd/kube-outlier
+
+      - name: Inject fixtures
+        run: |
+          kubectl create namespace e2e-demo
+          # Hand-applied one-offs (the two expected findings).
+          kubectl apply -n e2e-demo -f - <<'EOF'
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: debug-dump
+          data:
+            note: "incident capture, remove after RCA"
+          EOF
+          kubectl create -n e2e-demo -f - <<'EOF'
+          apiVersion: networking.k8s.io/v1
+          kind: NetworkPolicy
+          metadata:
+            name: temp-allow-all
+          spec:
+            podSelector: {}
+            policyTypes: [Ingress]
+            ingress: [{}]
+          EOF
+          # Pipeline-managed control that must NOT be flagged (helm-free
+          # equivalent per ADR-0005: helm field manager + Helm markers).
+          kubectl apply --server-side --field-manager=helm -n e2e-demo -f - <<'EOF'
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: web
+            labels:
+              app.kubernetes.io/managed-by: Helm
+            annotations:
+              meta.helm.sh/release-name: web
+              meta.helm.sh/release-namespace: e2e-demo
+          spec:
+            replicas: 0
+            selector:
+              matchLabels:
+                app: web
+            template:
+              metadata:
+                labels:
+                  app: web
+              spec:
+                containers:
+                  - name: web
+                    image: nginx
+          EOF
+
+      - name: Scan and assert
+        run: |
+          set +e
+          ./kube-outlier scan --fail-on inventory -o json > report.json
+          code=$?
+          set -e
+          [ "$code" -eq 3 ] || { echo "scan exit $code, want 3"; cat report.json; exit 1; }
+          python3 - <<'PY'
+          import json
+          rep = json.load(open("report.json"))
+          demo = [f for f in rep["findings"] if f["resource"]["namespace"] == "e2e-demo"]
+          names = sorted(f["resource"]["name"] for f in demo)
+          assert names == ["debug-dump", "temp-allow-all"], f"e2e-demo findings: {names}"
+          assert all(f["ownership"]["kubectlWritten"] for f in demo)
+          assert all(f["class"] == "likely-manual" for f in demo)
+          assert rep["fleetPresence"] == {"applied": False, "source": "none"}
+          print("kind e2e OK:", names)
+          PY
+
+      # A fresh cluster must not report the objects Kubernetes creates itself
+      # (default RBAC, APIServices, APF objects, ...): every cluster-scoped
+      # finding needs kubectl evidence.
+      - name: Cluster-scoped scan reports no system objects
+        run: |
+          set +e
+          ./kube-outlier scan --include-cluster-scoped -o json > cluster-scoped.json 2> cluster-scoped.err
+          code=$?
+          set -e
+          [ "$code" -le 2 ] || { echo "cluster-scoped scan exit $code"; cat cluster-scoped.err; exit 1; }
+          python3 - <<'PY'
+          import json
+          rep = json.load(open("cluster-scoped.json"))
+          cs = [f for f in rep["findings"] if not f["resource"]["namespace"]]
+          bad = [f["resource"] for f in cs if not f["ownership"]["kubectlWritten"] or f["resource"]["name"].startswith("system:")]
+          assert not bad, f"system objects reported: {bad}"
+          assert len(cs) <= 10, f"{len(cs)} cluster-scoped findings on a fresh cluster"
+          assert "ComponentStatus is deprecated" not in open("cluster-scoped.err").read()
+          print("cluster-scoped OK:", [f["resource"]["name"] for f in cs])
+          PY
+
+      # The setup app teams typically have: read access inside one namespace
+      # only. A cluster-wide scan is forbidden everywhere (exit 2, nothing
+      # found); --namespaces must list per namespace and find both one-offs.
+      - name: Namespace-scoped RBAC
+        run: |
+          # Applied as Helm-managed (helm field manager + Helm markers) so the
+          # RBAC objects in e2e-demo don't become hand-made findings themselves.
+          kubectl apply --server-side --field-manager=helm -n e2e-demo -f - <<'EOF'
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: ns-reader
+            labels: {app.kubernetes.io/managed-by: Helm}
+            annotations: {meta.helm.sh/release-name: ns-reader, meta.helm.sh/release-namespace: e2e-demo}
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: ns-reader
+            labels: {app.kubernetes.io/managed-by: Helm}
+            annotations: {meta.helm.sh/release-name: ns-reader, meta.helm.sh/release-namespace: e2e-demo}
+          rules:
+            - apiGroups: ["*"]
+              resources: ["*"]
+              verbs: ["get", "list"]
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: ns-reader
+            labels: {app.kubernetes.io/managed-by: Helm}
+            annotations: {meta.helm.sh/release-name: ns-reader, meta.helm.sh/release-namespace: e2e-demo}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+            name: ns-reader
+          subjects:
+            - kind: ServiceAccount
+              name: ns-reader
+              namespace: e2e-demo
+          EOF
+          cluster=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}')
+          kubectl config set-credentials ns-reader --token="$(kubectl create token ns-reader -n e2e-demo)"
+          kubectl config set-context ns-reader --cluster="$cluster" --user=ns-reader
+
+          set +e
+          ./kube-outlier scan --contexts ns-reader -o json > cluster-wide.json
+          wide=$?
+          ./kube-outlier scan --contexts ns-reader -n e2e-demo --fail-on inventory -o json > namespaced.json
+          scoped=$?
+          set -e
+          [ "$wide" -eq 2 ] || { echo "cluster-wide scan exit $wide, want 2"; cat cluster-wide.json; exit 1; }
+          [ "$scoped" -eq 3 ] || { echo "namespaced scan exit $scoped, want 3"; cat namespaced.json; exit 1; }
+          python3 - <<'PY'
+          import json
+          wide = json.load(open("cluster-wide.json"))
+          assert wide["findings"] == [] and wide["skippedGVRs"], "cluster-wide scan should find nothing and skip GVRs"
+          rep = json.load(open("namespaced.json"))
+          names = sorted(f["resource"]["name"] for f in rep["findings"])
+          assert names == ["debug-dump", "temp-allow-all"], f"namespaced findings: {names}"
+          assert rep["skippedGVRs"] == [], f"unexpected skips: {rep['skippedGVRs']}"
+          assert rep["scope"]["namespaceInclude"] == ["e2e-demo"]
+          print("namespace-scoped RBAC e2e OK:", names)
+          PY

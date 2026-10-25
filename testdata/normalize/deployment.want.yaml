@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: shop
+  ownerReferences:
+    - apiVersion: example.com/v1
+      kind: Platform
+      name: platform
+      uid: 00000000-0000-0000-0000-000000000002
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: registry.example.com/api:v1.2.3

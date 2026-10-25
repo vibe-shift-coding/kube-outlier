@@ -1,0 +1,3 @@
+SCORE  KIND             NAMESPACE/NAME      PRESENT-ON  CLUSTER  OWNER    AGE   WHY
+100    ConfigMap        default/debug-dump  1/3         a        kubectl  137d  no-pipeline-markers,kubectl-manager,last-applied,age,fleet-rare
+50     apps/Deployment  default/ingress     2/3         c        -        231d  missing-from-cluster

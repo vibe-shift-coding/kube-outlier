@@ -1,0 +1,28 @@
+# Fixture: hand-created via `kubectl create -f` (note: NO last-applied annotation —
+# `create` doesn't set it; the managedFields manager is the only kubectl evidence).
+# Expected: Owner=kubectl, KubectlWritten=true.
+# Score at now=2026-07-01: no-pipeline-markers(35) + kubectl-manager(25) + kind-weight HIGH(15) + age<7d(0) = 75 -> FINDING #2.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: temp-allow-all
+  namespace: default
+  uid: 5a6b7c8d-9e0f-4a1b-c2d3-ff56a7b8c9d0
+  creationTimestamp: "2026-06-28T16:12:55Z"
+  managedFields:
+    - manager: kubectl-create
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: "2026-06-28T16:12:55Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:ingress: {}
+          f:podSelector: {}
+          f:policyTypes: {}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}

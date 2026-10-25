@@ -1,0 +1,77 @@
+# Built-in normalization strip lists. Together with the user's
+# content.ignoreFields this file is the ONLY source of strip rules — deliberately
+# conservative: only unambiguous server
+# bookkeeping is dropped, because over-stripping hides real content differences.
+# metadata.ownerReferences and ownership labels are
+# deliberately KEPT (they are spec, not bookkeeping).
+#
+# Path syntax: dot-separated, "[*]" iterates every array element
+# (e.g. spec.ports[*].nodePort) and "[N]" picks one. Annotation keys contain dots, so annotations
+# are matched by exact key or key prefix, never by path.
+global:
+  drop:
+    - status
+    - metadata.managedFields
+    - metadata.resourceVersion
+    - metadata.uid
+    - metadata.generation
+    - metadata.creationTimestamp
+    - metadata.selfLink
+  dropAnnotations:
+    - kubectl.kubernetes.io/last-applied-configuration
+    - deployment.kubernetes.io/revision
+    - argocd.argoproj.io/tracking-id
+  dropAnnotationPrefixes:
+    - meta.helm.sh/
+
+perKind:
+  Service:
+    drop:
+      - spec.clusterIP
+      - spec.clusterIPs
+      - spec.ports[*].nodePort
+      - spec.healthCheckNodePort
+  PersistentVolumeClaim:
+    drop:
+      - spec.volumeName
+    dropAnnotationPrefixes:
+      - pv.kubernetes.io/
+      - volume.beta.kubernetes.io/
+      - volume.kubernetes.io/
+  apps/Deployment:
+    drop:
+      - spec.template.metadata.creationTimestamp
+  apps/StatefulSet:
+    drop:
+      - spec.template.metadata.creationTimestamp
+  apps/DaemonSet:
+    drop:
+      - spec.template.metadata.creationTimestamp
+  batch/Job:
+    drop:
+      - spec.template.metadata.creationTimestamp
+  batch/CronJob:
+    drop:
+      - spec.jobTemplate.spec.template.metadata.creationTimestamp
+
+# comparisonPerKind: aggressive server-default strips applied ONLY in content
+# comparison (normalize.CanonicalizeForComparison), on top of the lists above.
+# These fields are server-populated or environment-specific and would swamp
+# a real difference. containers[*].resources is deliberately KEPT (resource
+# differences matter) but canonicalized via quantityPaths so 100m==0.1 (ADR-0006).
+comparisonPerKind:
+  apps/Deployment: &podTemplate
+    drop:
+      - spec.template.spec.containers[*].terminationMessagePath
+      - spec.template.spec.containers[*].terminationMessagePolicy
+      - spec.template.spec.containers[*].imagePullPolicy
+      - spec.template.spec.dnsPolicy
+      - spec.template.spec.schedulerName
+      - spec.template.spec.restartPolicy
+      - spec.template.spec.securityContext
+    quantityPaths:
+      - spec.template.spec.containers[*].resources.limits.*
+      - spec.template.spec.containers[*].resources.requests.*
+  apps/StatefulSet: *podTemplate
+  apps/DaemonSet: *podTemplate
+  batch/Job: *podTemplate

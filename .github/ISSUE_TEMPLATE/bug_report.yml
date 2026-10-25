@@ -1,0 +1,42 @@
+name: Bug report
+description: Something kube-outlier did that it shouldn't have, or didn't do that it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove Secret values, tokens and anything else sensitive from what you paste.
+        Security issues go through the Security tab instead (see SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `kube-outlier version`.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command you ran, and any config file or KUBE_OUTLIER_* variables.
+      render: sh
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: The output (stdout and stderr) and the exit code (`echo $?`). Adding `-v` helps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Kubernetes version and distribution (EKS, GKE, AKS, kind, …), number of clusters, deployment tools (Helm, Argo CD, Flux).

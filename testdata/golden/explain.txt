@@ -1,0 +1,23 @@
+ConfigMap default/debug-dump
+
+status: reported (score 100 >= minimum score 40)
+presence: 1/3 clusters (ratio 0.33, source live)
+  present on:   a
+  missing from: b, c
+
+cluster a:
+  created: 2026-02-14T09:30:00Z (137d ago)
+  owner: kubectl
+  managers: kubectl-client-side-apply
+  signals:
+    kubectl.manager          manager=kubectl-client-side-apply
+    kubectl.last-applied     kubectl.kubernetes.io/last-applied-configuration present
+    no-pipeline-markers      no Helm, Argo CD or Flux markers, no ownerReferences
+
+score:
+  no-pipeline-markers  +35
+  kubectl-manager      +25
+  last-applied         +10
+  age                  +10  (137d)
+  fleet-rare           +20  (present on 1/3)
+  total: 100 (base 80, fleet +20)

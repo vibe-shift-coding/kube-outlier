@@ -1,0 +1,66 @@
+# Fixture: pipeline-deployed Helm resource.
+# Expected: Owner=helm, KubectlWritten=false, base score 18 at now=2026-07-01 -> NOT a finding.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  uid: 1c4b2a7e-9f11-4d3a-8b6e-aa01a1b2c3d4
+  creationTimestamp: "2025-11-12T08:14:03Z"
+  generation: 4
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/version: 1.12.1
+    helm.sh/chart: ingress-nginx-4.12.1
+  annotations:
+    meta.helm.sh/release-name: ingress-nginx
+    meta.helm.sh/release-namespace: ingress-nginx
+  managedFields:
+    - manager: helm
+      operation: Update
+      apiVersion: apps/v1
+      time: "2025-11-12T08:14:03Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            f:app.kubernetes.io/managed-by: {}
+            f:helm.sh/chart: {}
+        f:spec:
+          f:replicas: {}
+          f:template:
+            f:spec:
+              f:containers:
+                k:{"name":"controller"}:
+                  f:image: {}
+    - manager: kube-controller-manager
+      operation: Update
+      apiVersion: apps/v1
+      time: "2026-06-30T21:02:11Z"
+      fieldsType: FieldsV1
+      subresource: status
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:readyReplicas: {}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/name: ingress-nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/name: ingress-nginx
+    spec:
+      containers:
+        - name: controller
+          image: registry.k8s.io/ingress-nginx/controller:v1.12.1

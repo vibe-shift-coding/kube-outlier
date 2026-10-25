@@ -1,0 +1,55 @@
+provenance:
+  schemaVersion: 1
+  toolVersion: v0.1.0-test
+  generatedAt: "2026-07-01T00:00:00Z"
+  clusterCount: 3
+  clusters:
+    - a
+    - b
+    - c
+  scope:
+    includeClusterScoped: false
+    namespaceExclude:
+      - kube-node-lease
+      - kube-public
+      - kube-system
+    namespaceExcludePatterns: []
+    kindExclude:
+      - ComponentStatus
+      - Endpoints
+      - Event
+      - Node
+      - Pod
+      - apps/ControllerRevision
+      - apps/ReplicaSet
+      - coordination.k8s.io/Lease
+      - discovery.k8s.io/EndpointSlice
+      - events.k8s.io/Event
+      - metrics.k8s.io/NodeMetrics
+      - metrics.k8s.io/PodMetrics
+    kindInclude: []
+    hash: 720b7fc7362fb4543e5186fea0af670e5233f6ebe111df9e752884e2dbc778c0
+exceptions:
+  - resource: ConfigMap default/known-oneoff
+    reason: sanctioned debug ConfigMap, tracked in PLAT-1234
+    approvedBy: platform-team
+  - resource: ConfigMap default/old-exception
+    reason: expired example
+    approvedBy: platform-team
+    expires: "2026-01-01T00:00:00Z"
+entries:
+  - resource: ConfigMap default/cluster-info
+    clusterCount: 3
+    ratio: 1
+    ownershipSummary:
+      unknown: 3
+  - resource: ConfigMap default/debug-dump
+    clusterCount: 1
+    ratio: 0.3333333333333333
+    ownershipSummary:
+      kubectl: 1
+  - resource: apps/Deployment default/ingress
+    clusterCount: 2
+    ratio: 0.6666666666666666
+    ownershipSummary:
+      helm: 2

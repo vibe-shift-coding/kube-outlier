@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: shop
+  uid: 00000000-0000-0000-0000-000000000001
+  resourceVersion: "999"
+  generation: 7
+  creationTimestamp: "2026-02-02T00:00:00Z"
+  ownerReferences:
+    - apiVersion: example.com/v1
+      kind: Platform
+      name: platform
+      uid: 00000000-0000-0000-0000-000000000002
+  annotations:
+    deployment.kubernetes.io/revision: "7"
+    argocd.argoproj.io/tracking-id: "api:apps/Deployment:shop/api"
+  managedFields:
+    - manager: argocd-controller
+      operation: Apply
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: registry.example.com/api:v1.2.3
+status:
+  readyReplicas: 3

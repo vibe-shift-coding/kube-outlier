@@ -1,0 +1,18 @@
+# Fixture kubeconfig: one context pointing at a port nothing listens on.
+# Used by tests to exercise fail-soft probing (Reachable=false, SkipReason set)
+# and exit code 2/1 paths, entirely offline.
+apiVersion: v1
+kind: Config
+current-context: unreachable
+clusters:
+  - name: unreachable
+    cluster:
+      server: https://127.0.0.1:1
+contexts:
+  - name: unreachable
+    context:
+      cluster: unreachable
+      user: unreachable
+users:
+  - name: unreachable
+    user: {}

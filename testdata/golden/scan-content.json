@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "toolVersion": "v0.1.0-test",
+  "generatedAt": "2026-07-01T00:00:00Z",
+  "fleet": {
+    "requested": 3,
+    "reachable": 3,
+    "clusters": [
+      {
+        "name": "a",
+        "context": "a",
+        "reachable": true,
+        "serverVersion": "v1.30.0"
+      },
+      {
+        "name": "b",
+        "context": "b",
+        "reachable": true,
+        "serverVersion": "v1.30.0"
+      },
+      {
+        "name": "c",
+        "context": "c",
+        "reachable": true,
+        "serverVersion": "v1.30.0"
+      }
+    ]
+  },
+  "scope": {
+    "includeClusterScoped": false,
+    "namespaceExclude": [
+      "kube-system",
+      "kube-public",
+      "kube-node-lease"
+    ],
+    "namespaceExcludePatterns": [],
+    "kindExclude": [
+      "Event",
+      "events.k8s.io/Event",
+      "discovery.k8s.io/EndpointSlice",
+      "Endpoints",
+      "coordination.k8s.io/Lease",
+      "Pod",
+      "apps/ReplicaSet",
+      "apps/ControllerRevision",
+      "metrics.k8s.io/NodeMetrics",
+      "metrics.k8s.io/PodMetrics",
+      "ComponentStatus",
+      "Node"
+    ],
+    "kindInclude": []
+  },
+  "fleetPresence": {
+    "applied": true,
+    "source": "live"
+  },
+  "skippedGVRs": [],
+  "findings": [
+    {
+      "class": "content-differs",
+      "resource": {
+        "group": "apps",
+        "kind": "Deployment",
+        "namespace": "default",
+        "name": "web",
+        "id": "apps/Deployment default/web"
+      },
+      "clusters": [
+        "c"
+      ],
+      "score": {
+        "base": 0,
+        "fleetModifier": 0,
+        "total": 0,
+        "fleetApplied": false,
+        "reasons": []
+      },
+      "presence": {
+        "presentOn": [
+          "a",
+          "b",
+          "c"
+        ],
+        "missingFrom": [],
+        "presentCount": 3,
+        "fleetSize": 3,
+        "ratio": 1
+      },
+      "content": {
+        "majorityClusters": [
+          "a",
+          "b"
+        ],
+        "majorityHash": "63688d0cf7a39dfa8b3961d70c02e0838664fd1d5f4869c6c5529171e12606bf",
+        "differing": [
+          {
+            "cluster": "c",
+            "hash": "b2fe4d792ef6bf70bdeafc91ee7d5a2a37ecb1659ee261e0fd49be4755cee0d4",
+            "ops": [
+              {
+                "op": "replace",
+                "path": "/spec/template/spec/containers/0/image",
+                "majorityValue": "web:v1",
+                "clusterValue": "web:v2"
+              }
+            ]
+          }
+        ]
+      },
+      "creationTimestamps": {
+        "a": "2026-06-01T00:00:00Z",
+        "b": "2026-06-01T00:00:00Z",
+        "c": "2026-06-26T00:00:00Z"
+      },
+      "ageDays": 30,
+      "message": "apps/Deployment default/web content differs on 1/3 clusters from the majority version"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "byClass": {
+      "content-differs": 1
+    },
+    "suppressedBelowMinScore": 0
+  },
+  "partial": false,
+  "exitCode": 4
+}

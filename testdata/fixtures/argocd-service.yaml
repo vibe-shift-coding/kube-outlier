@@ -1,0 +1,43 @@
+# Fixture: Argo CD-synced resource (tracking-id annotation + instance label + argocd manager).
+# Expected: Owner=argocd, KubectlWritten=false, base score 18 at now=2026-07-01 -> NOT a finding.
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-api
+  namespace: payments
+  uid: 7f2e5d10-33aa-4c1f-9e70-bb12c3d4e5f6
+  creationTimestamp: "2026-01-20T14:47:29Z"
+  labels:
+    app.kubernetes.io/instance: payments
+    app.kubernetes.io/name: payments-api
+  annotations:
+    argocd.argoproj.io/tracking-id: "payments:/Service:payments/payments-api"
+  managedFields:
+    - manager: argocd-application-controller
+      operation: Update
+      apiVersion: v1
+      time: "2026-01-20T14:47:29Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:argocd.argoproj.io/tracking-id: {}
+          f:labels:
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/name: {}
+        f:spec:
+          f:ports:
+            k:{"port":80,"protocol":"TCP"}:
+              f:port: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:type: {}
+spec:
+  type: ClusterIP
+  clusterIP: 10.96.114.23
+  selector:
+    app.kubernetes.io/name: payments-api
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080

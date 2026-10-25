@@ -1,0 +1,3 @@
+SCORE  KIND             NAMESPACE/NAME         IN-BASELINE  CLUSTER  OWNER    AGE   WHY
+100    ConfigMap        default/incident-dump  0/3          d        kubectl  137d  no-pipeline-markers,kubectl-manager,last-applied,age,fleet-rare
+50     apps/Deployment  default/ingress        2/3          d        -        -     missing-from-cluster

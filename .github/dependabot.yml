@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Keeps the SHA-pinned actions in .github/workflows current; each update is a
+  # pull request that runs CI before you merge it.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    # One weekly pull request for all Go dependencies instead of one per module.
+    groups:
+      go:
+        patterns: ["*"]

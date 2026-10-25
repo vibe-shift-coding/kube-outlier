@@ -1,0 +1,30 @@
+# Fixture: hand-applied one-off (`kubectl apply -f` during an incident, forgotten).
+# Expected: Owner=kubectl, KubectlWritten=true.
+# Score at now=2026-07-01: no-pipeline-markers(35) + kubectl-manager(25) + last-applied(10) + age>90d(10) = 80 -> FINDING #1.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: debug-dump
+  namespace: default
+  uid: 3e4f5a6b-7c8d-4e9f-a0b1-ee45f6a7b8c9
+  creationTimestamp: "2026-02-14T09:30:00Z"
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"ConfigMap","metadata":{"annotations":{},"name":"debug-dump","namespace":"default"},"data":{"capture.sh":"tcpdump -i any -w /tmp/incident-4711.pcap port 5432\n","note":"temp capture config for INC-4711, remove after RCA"}}
+  managedFields:
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: v1
+      time: "2026-02-14T09:30:00Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          f:capture.sh: {}
+          f:note: {}
+        f:metadata:
+          f:annotations:
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+data:
+  capture.sh: |
+    tcpdump -i any -w /tmp/incident-4711.pcap port 5432
+  note: "temp capture config for INC-4711, remove after RCA"

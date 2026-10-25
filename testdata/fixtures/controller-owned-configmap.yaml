@@ -1,0 +1,37 @@
+# Fixture: controller-owned resource (operator-created ConfigMap with ownerReferences).
+# Expected: Owner=controller -> never a finding: controller-owned resources are skipped.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-es-scripts
+  namespace: search
+  uid: 9a8b7c6d-5e4f-4a3b-2c1d-cc23d4e5f6a7
+  creationTimestamp: "2026-03-03T10:05:41Z"
+  labels:
+    common.k8s.elastic.co/type: elasticsearch
+    elasticsearch.k8s.elastic.co/cluster-name: search-es
+  ownerReferences:
+    - apiVersion: elasticsearch.k8s.elastic.co/v1
+      kind: Elasticsearch
+      name: search-es
+      uid: 0d1e2f3a-4b5c-6d7e-8f90-dd34e5f6a7b8
+      controller: true
+      blockOwnerDeletion: true
+  managedFields:
+    - manager: elastic-operator
+      operation: Update
+      apiVersion: v1
+      time: "2026-03-03T10:05:41Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          f:readiness-probe-script.sh: {}
+        f:metadata:
+          f:labels:
+            f:elasticsearch.k8s.elastic.co/cluster-name: {}
+          f:ownerReferences:
+            k:{"uid":"0d1e2f3a-4b5c-6d7e-8f90-dd34e5f6a7b8"}: {}
+data:
+  readiness-probe-script.sh: |
+    #!/usr/bin/env bash
+    curl -sk "https://127.0.0.1:9200/_cluster/health" >/dev/null
