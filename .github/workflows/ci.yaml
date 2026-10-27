@@ -48,11 +48,29 @@ jobs:
       - name: Vulnerability check
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
-  # Single-cluster ownership e2e against a real API server. The 3-cluster fleet e2e runs locally via
+  # Single-cluster ownership e2e against a real API server, once per supported
+  # Kubernetes minor. The 3-cluster fleet e2e runs locally via
   # scripts/fleet-smoke.sh.
-  kind-e2e:
+  kind-e2e-versions:
+    name: kind-e2e (${{ matrix.k8s }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      # One minor failing must not hide the result for the others.
+      fail-fast: false
+      matrix:
+        # The three most recent Kubernetes minors (https://kubernetes.io/releases/).
+        # When a new minor ships with a kind node image: bump the kind `version`
+        # below, drop the oldest entry, add the new one, and refresh every
+        # node_image from that kind release's notes (tag@digest, never a bare tag).
+        include:
+          # Images and digests from the kind v0.33.0 release notes.
+          - k8s: "1.35"
+            node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
+          - k8s: "1.36"
+            node_image: kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
+          - k8s: "1.37"
+            node_image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -67,7 +85,7 @@ jobs:
           cluster_name: e2e
           # Pinned so a new kind release can't change the cluster under test.
           version: v0.33.0
-          node_image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+          node_image: ${{ matrix.node_image }}
 
       - name: Build
         run: go build -o kube-outlier ./cmd/kube-outlier
@@ -225,3 +243,16 @@ jobs:
           assert rep["scope"]["namespaceInclude"] == ["e2e-demo"]
           print("namespace-scoped RBAC e2e OK:", names)
           PY
+
+  # Single required status check for the whole matrix, so the repository
+  # ruleset doesn't change when the tested Kubernetes versions do.
+  kind-e2e:
+    needs: kind-e2e-versions
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All Kubernetes versions passed
+        env:
+          RESULT: ${{ needs.kind-e2e-versions.result }}
+        run: '[ "$RESULT" = success ] || { echo "kind-e2e matrix result: $RESULT"; exit 1; }'

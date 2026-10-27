@@ -72,7 +72,9 @@ It runs on Linux, macOS and Windows. Until prebuilt binaries ship, installing ne
 binaries, a Homebrew tap and a `kubectl outlier` krew plugin are on the
 [roadmap](ROADMAP.md).
 
-It is tested on Kubernetes 1.35 (minikube) and 1.37 (kind, in CI). Older clusters should
+It is tested in CI (kind) on the three most recent Kubernetes
+[minor releases](https://kubernetes.io/releases/); a new release joins once kind
+publishes a node image for it, which can take a few weeks. Older clusters should
 work as long as they record `managedFields` (Kubernetes 1.18 and later), but aren't
 tested. Managed clusters work too: kube-outlier reads your kubeconfig as `kubectl` does,
 including exec credential plugins (`aws eks get-token`, `gke-gcloud-auth-plugin`,
