@@ -13,7 +13,7 @@ require (
 	github.com/knadh/koanf/providers/structs v1.0.1
 	github.com/knadh/koanf/v2 v2.4.1
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/wI2L/jsondiff v0.7.1
 	golang.org/x/sync v0.24.0
 	golang.org/x/term v0.47.0
